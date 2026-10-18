@@ -261,6 +261,12 @@ These are ignored if using text mode.
 * `term_margin_gradient` - Set the thickness in pixel for the gradient around
   the terminal. Clamped to `term_margin`. Defaults to `0`, or to `4` when a
   `wallpaper` is displayed.
+* `term_area` - Place the terminal in a box instead of the whole screen, as
+  `<x>,<y>,<width>,<height>` in pixels. The rest of the screen shows the
+  wallpaper untouched, the box shows it blended with `term_background`, and
+  `term_margin` becomes the padding inside the box. The menu needs at least
+  40 columns and 16 rows, or it falls back to text mode. Requires a
+  `wallpaper`; ignored with `interface_rotation`.
 
 Editor control options:
 

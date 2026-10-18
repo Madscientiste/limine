@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include <lib/gterm.h>
+#include <lib/gterm_area.h>
 #include <lib/misc.h>
 #include <lib/libc.h>
 #include <lib/config.h>
@@ -841,17 +842,46 @@ bool gterm_init(struct fb_info **_fbs, size_t *_fbs_count,
             continue;
         }
 
+        struct gterm_area area;
+        bool use_area = background != NULL && cfg.fb_rotation == FLANTERM_FB_ROTATE_0
+                     && gterm_area_get(config, fb, &area);
+
+        // In area mode, build an unblended full screen canvas; the panel is blended per area below.
+        size_t saved_margin = margin;
+        uint32_t saved_default_bg = default_bg;
+        if (use_area) {
+            margin = 0;
+            default_bg = 0xff000000;
+        }
+
         size_t font_scale_x, font_scale_y;
         gterm_fb_setup(fb, config, &cfg, &font_scale_x, &font_scale_y);
 
+        margin = saved_margin;
+        default_bg = saved_default_bg;
+
+        void *term_fb = (void *)(uintptr_t)fb->framebuffer_addr;
+        size_t term_width = fb->framebuffer_width;
+        size_t term_height = fb->framebuffer_height;
+        uint32_t *term_canvas = bg_canvas;
+        size_t area_canvas_size = 0;
+
+        if (use_area) {
+            gterm_area_paint_screen(fb, bg_canvas);
+            term_canvas = gterm_area_make_canvas(fb, bg_canvas, &area, default_bg, &area_canvas_size);
+            term_fb = (void *)(uintptr_t)(fb->framebuffer_addr + area.y * fb->framebuffer_pitch + area.x * 4);
+            term_width = area.width;
+            term_height = area.height;
+        }
+
         terms[terms_i] = flanterm_fb_init(ext_mem_alloc_size_t,
                             pmm_free_size_t,
-                            (void *)(uintptr_t)fb->framebuffer_addr,
-                            fb->framebuffer_width, fb->framebuffer_height, fb->framebuffer_pitch,
+                            term_fb,
+                            term_width, term_height, fb->framebuffer_pitch,
                             fb->red_mask_size, fb->red_mask_shift,
                             fb->green_mask_size, fb->green_mask_shift,
                             fb->blue_mask_size, fb->blue_mask_shift,
-                            bg_canvas,
+                            term_canvas,
                             cfg.ansi_colours, cfg.ansi_bright_colours,
                             &default_bg, &default_fg,
                             &default_bg_bright, &default_fg_bright,
@@ -861,6 +891,10 @@ bool gterm_init(struct fb_info **_fbs, size_t *_fbs_count,
 
         if (terms[terms_i] != NULL) {
             terms_i++;
+        }
+
+        if (use_area) {
+            pmm_free(term_canvas, area_canvas_size);
         }
 
         if (bg_canvas != NULL) {
