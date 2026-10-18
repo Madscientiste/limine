@@ -199,6 +199,9 @@ Limine interface control options:
   unspecified, it is derived from `interface_help_colour` by adding `0x55`
   to each channel (saturating at `0xff`).
 * `interface_help_color_bright` - Alias of `interface_help_colour_bright`.
+* `interface_entry_colour` - An `RRGGBB` hexadecimal value specifying the
+  text colour of menu entries. Can be overridden per entry with `colour`.
+* `interface_entry_color` - Alias of `interface_entry_colour`.
 * `interface_selected_colour` - An `RRGGBB` hexadecimal value specifying the
   text colour of the selected menu entry. If this or
   `interface_selected_background_colour` is set, the selected entry is drawn
@@ -273,6 +276,9 @@ Editor control options:
 
 * `comment` - An optional comment string that will be displayed by the
   bootloader on the menu when an entry is selected.
+* `colour` - An `RRGGBB` hexadecimal value specifying the text colour of this
+  entry in the menu, overriding `interface_entry_colour`.
+* `color` - Alias of `colour`.
 * `protocol` - The boot protocol that will be used to boot the
   kernel/executable. Valid protocols are: `linux`, `limine`, `multiboot`
   (or `multiboot1`), `multiboot2`, `efi`, `efi_boot_entry` and `bios`.

@@ -8,6 +8,8 @@
 // Room for two "\e[38;2;255;255;255m" sequences plus a terminator.
 #define ESCAPE_BUF_SIZE 48
 
+static bool entry_rgb_set = false;
+static uint32_t entry_rgb;
 static bool selected_fg_set = false;
 static uint32_t selected_fg_rgb;
 static bool selected_bg_set = false;
@@ -60,33 +62,53 @@ static char *write_rgb_escape(char *p, char sgr_digit, uint32_t rgb) {
 }
 
 void menu_theme_init(void) {
+    entry_rgb_set = get_rgb(NULL, "INTERFACE_ENTRY_COLOUR", "INTERFACE_ENTRY_COLOR", &entry_rgb);
     selected_fg_set = get_rgb(NULL, "INTERFACE_SELECTED_COLOUR", "INTERFACE_SELECTED_COLOR", &selected_fg_rgb);
     selected_bg_set = get_rgb(NULL, "INTERFACE_SELECTED_BACKGROUND_COLOUR", "INTERFACE_SELECTED_BACKGROUND_COLOR",
                               &selected_bg_rgb);
 }
 
-const char *menu_theme_entry_begin(bool selected) {
-    if (!selected) {
-        return "";
+static bool get_entry_rgb(struct menu_entry *entry, uint32_t *out) {
+    if (get_rgb(entry->body, "COLOUR", "COLOR", out)) {
+        return true;
     }
-    if (!selected_fg_set && !selected_bg_set) {
-        return "\e[7m";
+    if (entry_rgb_set) {
+        *out = entry_rgb;
+        return true;
+    }
+    return false;
+}
+
+const char *menu_theme_entry_begin(struct menu_entry *entry, bool selected) {
+    char *p = escape_buf;
+    uint32_t rgb;
+
+    if (selected && (selected_fg_set || selected_bg_set)) {
+        if (selected_fg_set) {
+            p = write_rgb_escape(p, '3', selected_fg_rgb);
+        } else if (get_entry_rgb(entry, &rgb)) {
+            p = write_rgb_escape(p, '3', rgb);
+        }
+        if (selected_bg_set) {
+            p = write_rgb_escape(p, '4', selected_bg_rgb);
+        }
+    } else {
+        if (get_entry_rgb(entry, &rgb)) {
+            p = write_rgb_escape(p, '3', rgb);
+        }
+        if (selected) {
+            *p++ = '\e'; *p++ = '['; *p++ = '7'; *p++ = 'm';
+        }
     }
 
-    char *p = escape_buf;
-    if (selected_fg_set) {
-        p = write_rgb_escape(p, '3', selected_fg_rgb);
-    }
-    if (selected_bg_set) {
-        p = write_rgb_escape(p, '4', selected_bg_rgb);
-    }
     *p = 0;
     return escape_buf;
 }
 
-const char *menu_theme_entry_end(bool selected) {
-    if (!selected) {
-        return "";
+const char *menu_theme_entry_end(struct menu_entry *entry, bool selected) {
+    uint32_t rgb;
+    if ((selected && (selected_fg_set || selected_bg_set)) || get_entry_rgb(entry, &rgb)) {
+        return "\e[0m";
     }
-    return selected_fg_set || selected_bg_set ? "\e[0m" : "\e[27m";
+    return selected ? "\e[27m" : "";
 }

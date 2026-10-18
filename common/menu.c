@@ -319,6 +319,8 @@ static size_t get_prev_line(size_t index, const char *buffer) {
 
 static const char *VALID_KEYS[] = {
     "COMMENT",
+    "COLOUR",
+    "COLOR",
     "PROTOCOL",
     "CMDLINE",
     "PATH",
@@ -1356,7 +1358,7 @@ static size_t print_tree(size_t offset, size_t window, const char *shift, size_t
         if (is_selected) {
             *selected_menu_entry = current_entry;
         }
-        if (!no_print) print("%s", menu_theme_entry_begin(is_selected));
+        if (!no_print) print("%s", menu_theme_entry_begin(current_entry, is_selected));
         {
             size_t name_len = strlen(current_entry->name);
             if (!no_print) {
@@ -1365,9 +1367,9 @@ static size_t print_tree(size_t offset, size_t window, const char *shift, size_t
                 size_t max_name = (terms[0]->cols > used) ? terms[0]->cols - used : 0;
                 if (name_len > max_name && max_name > 3) {
                     print(" %S...%s\n", current_entry->name, (size_t)(max_name - 3),
-                          menu_theme_entry_end(is_selected));
+                          menu_theme_entry_end(current_entry, is_selected));
                 } else {
-                    print(" %s %s\n", current_entry->name, menu_theme_entry_end(is_selected));
+                    print(" %s %s\n", current_entry->name, menu_theme_entry_end(current_entry, is_selected));
                 }
             }
             (*max_height)++;
