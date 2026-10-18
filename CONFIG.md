@@ -199,6 +199,16 @@ Limine interface control options:
   unspecified, it is derived from `interface_help_colour` by adding `0x55`
   to each channel (saturating at `0xff`).
 * `interface_help_color_bright` - Alias of `interface_help_colour_bright`.
+* `interface_selected_colour` - An `RRGGBB` hexadecimal value specifying the
+  text colour of the selected menu entry. If this or
+  `interface_selected_background_colour` is set, the selected entry is drawn
+  with these colours instead of in reverse video.
+* `interface_selected_color` - Alias of `interface_selected_colour`.
+* `interface_selected_background_colour` - An `RRGGBB` hexadecimal value
+  specifying the background colour of the selected menu entry. If unset while
+  `interface_selected_colour` is set, the background is left as is.
+* `interface_selected_background_color` - Alias of
+  `interface_selected_background_colour`.
 
 Limine graphical terminal control options:
 

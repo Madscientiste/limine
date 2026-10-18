@@ -4,6 +4,7 @@
 #include <stdnoreturn.h>
 #include <config.h>
 #include <menu.h>
+#include <menu_theme.h>
 #include <lib/bli.h>
 #include <lib/print.h>
 #include <lib/misc.h>
@@ -1351,10 +1352,11 @@ static size_t print_tree(size_t offset, size_t window, const char *shift, size_t
             if (!no_print) print("   ");
         }
         cur_len += 3;
-        if (base_index + max_entries == selected_entry) {
+        bool is_selected = base_index + max_entries == selected_entry;
+        if (is_selected) {
             *selected_menu_entry = current_entry;
-            if (!no_print) print("\e[7m");
         }
+        if (!no_print) print("%s", menu_theme_entry_begin(is_selected));
         {
             size_t name_len = strlen(current_entry->name);
             if (!no_print) {
@@ -1362,9 +1364,10 @@ static size_t print_tree(size_t offset, size_t window, const char *shift, size_t
                 size_t used = prefix_len + cur_len + 1 + 1; // shift + decorations + space before + space after
                 size_t max_name = (terms[0]->cols > used) ? terms[0]->cols - used : 0;
                 if (name_len > max_name && max_name > 3) {
-                    print(" %S...\e[27m\n", current_entry->name, (size_t)(max_name - 3));
+                    print(" %S...%s\n", current_entry->name, (size_t)(max_name - 3),
+                          menu_theme_entry_end(is_selected));
                 } else {
-                    print(" %s \e[27m\n", current_entry->name);
+                    print(" %s %s\n", current_entry->name, menu_theme_entry_end(is_selected));
                 }
             }
             (*max_height)++;
@@ -1768,6 +1771,8 @@ noreturn void _menu(bool first_run) {
         parse_rgb_colour_value(interface_help_colour_bright_str, &help_bright_rgb);
     }
     format_fg_rgb_escape(interface_help_colour_bright, help_bright_rgb);
+
+    menu_theme_init();
 
     bool custom_branding = false;
     {
